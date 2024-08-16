@@ -1,11 +1,31 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
+#include <iostream>
 
 using namespace llvm;
+
+namespace {
+
+cl::OptionCategory PrintTestOption("Options for -test");
+cl::opt<int> Test("test", cl::desc("Print input"),
+                           cl::value_desc("int input"),
+                           cl::cat(PrintTestOption));
+
+void PrintTest(int input, raw_ostream &OS) {
+  OS << input;
+}
+
+} // namespace
+
 
 int main(int argc, char **argv) {
   InitLLVM X(argc, argv);
   cl::ParseCommandLineOptions(argc, argv);
+
+  std::string output;
+  llvm::raw_string_ostream stream(output);
+  PrintTest(Test, stream);
+  std::cout << output << std::endl;
 
   return 0;
 }
