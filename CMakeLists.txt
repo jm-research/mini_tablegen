@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.6)
+
+set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
+set(CMAKE_C_COMPILER "/usr/local/bin/clang")
+
 project(
-  tablegen
+  mini_tablegen
   VERSION 0.0.1
   LANGUAGES C CXX
 )
@@ -32,7 +36,7 @@ set(tablegen_SRCS)
 set(STATIC_LIB_NAME ${PROJECT_NAME})
 
 # apt install llvm-15-dev
-set(LLVM_DIR /usr/lib/llvm-15/lib/cmake/llvm)
+set(LLVM_DIR /usr/lib/llvm-18/lib/cmake/llvm)
 # manually install
 # set(LLVM_DIR /usr/local/lib/cmake/llvm)
 
@@ -53,4 +57,5 @@ target_link_libraries(${STATIC_LIB_NAME}
   LLVMCore
 )
 
+add_subdirectory(tools)
 # add_subdirectory(unittests)
