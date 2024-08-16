@@ -1,8 +1,10 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
+#include "mini_tablegen/Main.h"
 #include <iostream>
 
 using namespace llvm;
+using namespace mini_tablegen;
 
 namespace {
 
@@ -27,5 +29,5 @@ int main(int argc, char **argv) {
   PrintTest(Test, stream);
   std::cout << output << std::endl;
 
-  return 0;
+  return TableGenMain(argv[0]);
 }
