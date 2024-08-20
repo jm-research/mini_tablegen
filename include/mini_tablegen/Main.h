@@ -5,12 +5,13 @@
 
 namespace llvm {
 class raw_ostream;
-class RecordKeeper;
 } // namespace llvm
 
 namespace mini_tablegen {
 
 using namespace llvm;
+
+class RecordKeeper;
 
 /// Perform the action using Records, and write output to OS.
 /// Returns true on error, false otherwise.
