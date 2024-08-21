@@ -2,8 +2,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include <iostream>
-
-namespace experimentals {
+#include <llvm/Support/SMLoc.h>
 
 namespace tgtok {
 enum TokKind {
@@ -162,9 +161,14 @@ static inline bool isStringValue(tgtok::TokKind Kind) {
 }
 } // namespace tgtok
 
-} // namespace experimentals
+// params
 
-using namespace experimentals;
+const char *CurPtr = nullptr;
+
+llvm::StringRef CurBuf;
+
+const char *TokStart = nullptr;
+tgtok::TokKind CurCode = tgtok::TokKind::Eof;
 
 static llvm::SourceMgr SrcMgr;
 
@@ -179,6 +183,53 @@ def foo : test<[{ hello world! }]>;
 static std::unique_ptr<llvm::MemoryBuffer> buffer =
     llvm::MemoryBuffer::getMemBufferCopy(SrcString, "<string>");
 
+unsigned CurBuffer = 0;
+
+// lexer
+
+llvm::SMLoc getLoc() { return llvm::SMLoc::getFromPointer(TokStart); }
+
+int getNextChar() {
+  char CurChar = *CurPtr++;
+  switch (CurChar) {
+  default:
+    return (unsigned char)CurChar;
+
+  case 0: {
+    // A NUL character in the stream is either the end of the current buffer or
+    // a spurious NUL in the file.  Disambiguate that here.
+    if (CurPtr - 1 == CurBuf.end()) {
+      --CurPtr; // Arrange for another call to return EOF again.
+      return EOF;
+    }
+    return ' ';
+  }
+
+  case '\n':
+  case '\r':
+    // Handle the newline character by ignoring it and incrementing the line
+    // count.  However, be careful about 'dos style' files with \n\r in them.
+    // Only treat a \n\r or \r\n as a single line.
+    if ((*CurPtr == '\n' || (*CurPtr == '\r')) && *CurPtr != CurChar)
+      ++CurPtr; // Eat the two char newline sequence.
+    return '\n';
+  }
+}
+
+tgtok::TokKind LexToken(bool FileOrLineStart = false) {
+  TokStart = CurPtr;
+  int CurChar = getNextChar();
+
+  printf("CurChar: %u", CurChar);
+
+  return tgtok::Eof;
+}
+
+tgtok::TokKind Lex() {
+  CurCode = LexToken(CurPtr == CurBuf.begin());
+  return CurCode;
+}
+
 int main() {
   SrcMgr.AddNewSourceBuffer(std::move(buffer), llvm::SMLoc());
 
@@ -186,6 +237,14 @@ int main() {
     const llvm::MemoryBuffer *buffer = SrcMgr.getMemoryBuffer(i + 1);
     llvm::StringRef bufferContents = buffer->getBuffer();
 
-    std::cout << bufferContents.str() << std::endl;
+    // std::cout << bufferContents.str() << std::endl;
   }
+
+  // lex
+  CurBuffer = SrcMgr.getMainFileID();
+  CurBuf = SrcMgr.getMemoryBuffer(CurBuffer)->getBuffer();
+  CurPtr = CurBuf.begin();
+  TokStart = nullptr;
+
+  Lex();
 }
